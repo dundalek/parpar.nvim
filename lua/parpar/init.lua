@@ -4,27 +4,30 @@ require("parinfer.setup")
 local paredit = require("nvim-paredit")
 local paredit_defaults = require("nvim-paredit.defaults")
 
-local function with_wrapper(f)
-  if (vim.b.parinfer_enabled) then
+local function pause()
+  if vim.b.parinfer_enabled then
     local prev_mode = vim.g.parinfer_mode
     vim.b.parinfer_enabled = false
-    -- Q: add try/catch here?
-    f()
-    vim.g.parinfer_mode = "paren"
-    vim.b.parinfer_enabled = true
-    -- "parinfer.setup" exposes parinfer global
-    --- @diagnostic disable-next-line: undefined-global
-    parinfer.text_changed(vim.fn.bufnr())
-    vim.g.parinfer_mode = prev_mode
+    return function()
+      vim.g.parinfer_mode = "paren"
+      vim.b.parinfer_enabled = true
+      -- "parinfer.setup" exposes parinfer global
+      --- @diagnostic disable-next-line: undefined-global
+      parinfer.text_changed(vim.fn.bufnr())
+      vim.g.parinfer_mode = prev_mode
+    end
   else
-    f()
+    return function() end
   end
 end
 
 local function wrap(f)
   -- Q: should we take and forward additional fn arguments?
   return function()
-    with_wrapper(f)
+    local resume = pause()
+    local result = pcall(f)
+    resume()
+    return result;
   end
 end
 
@@ -55,4 +58,5 @@ end
 return {
   setup = setup,
   wrap = wrap,
+  pause = pause,
 }
