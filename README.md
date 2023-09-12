@@ -1,6 +1,7 @@
-# Parinfer + Paredit = ParPar
+# ParPar = Parinfer + Paredit
 
-ParPar is a Neovim plugin that blends [Parinfer](https://shaunlebron.github.io/parinfer/) and [Paredit](https://calva.io/paredit/) modes together for the best lisp editing experience.  
+ParPar is a Neovim plugin that blends [Parinfer](https://shaunlebron.github.io/parinfer/) and [Paredit](https://calva.io/paredit/) modes together for the best lisp editing experience.
+
 It combines best of both, ease of use of Parinfer and extra power of advanced Paredit operations.
 
 It works by integrating [nvim-parinfer](https://github.com/gpanders/nvim-parinfer) and [nvim-paredit](https://github.com/julienvincent/nvim-paredit) plugins and making them play well together.
@@ -59,8 +60,8 @@ require("nvim-paredit").setup {
 
 #### Slurp/Barf Mnemonic
 
-The custom bindings example binds <kbd>Alt</kbd>+<kbd>Shift</kbd> with <kbd>H</kbd>, <kbd>J</kbd>, <kbd>K</kbd>, <kbd>L</kbd> to slurp/barf actions.
-These are based on original [vim-sexp](https://github.com/guns/vim-sexp) bindings. Figuring out whether to tirgger slurp or barf and in which direction can be confusing, but there exists a simple mnemonic.
+The custom bindings example above binds <kbd>Alt</kbd>+<kbd>Shift</kbd> with <kbd>H</kbd>, <kbd>J</kbd>, <kbd>K</kbd>, <kbd>L</kbd> to slurp/barf actions.
+These are based on original [vim-sexp](https://github.com/guns/vim-sexp) bindings. Figuring out whether to tirgger slurp or barf and in which direction can be confusing, but there is a simple mnemonic.
 
 It helps to imagine the parentheses are placed between keys.  
 The H, J keys manipulate opening parenthesis (left) and K, L manipulate closing parenthesis (right). Then for example opening parenthesis H moves it to the left, J to the right. 
@@ -69,6 +70,29 @@ The H, J keys manipulate opening parenthesis (left) and K, L manipulate closing 
  (      )
 🠤 🠦   🠤 🠦
 H J    K L
+```
+
+#### Using with AI completion plugins
+
+Parinfer can interfere with AI completion plugins like Copilot or [Codeium](https://codeium.com). Here is an example how to make parinfer work with the [codeium.vim](https://github.com/Exafunction/codeium.vim) plugin. It uses `parpar.pause()` to pause parinfer, then accept the completion and finally resume parinfer asynchronously using a callback to `vim.schedule()`.
+
+```lua
+{
+  "Exafunction/codeium.vim",
+  dependencies = { "dundalek/parpar.nvim" },
+  init = function()
+    vim.g.codeium_disable_bindings = 1
+  end,
+  config = function()
+    local parpar = require("parpar")
+    local accept = function()
+      vim.schedule(parpar.pause())
+      return vim.fn["codeium#Accept"]()
+    end
+
+    vim.keymap.set("i", "<Tab>", accept, { expr = true })
+  end
+},
 ```
 
 ## How it works
